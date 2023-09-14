@@ -36,3 +36,9 @@ The dataset should be formed as **OCTA-500**, like:
                         ...
             /OCTA_6M
                 ...
+
+The results and metrics will recorded in the **results** folder (If it doesn't exist, it will be created).
+
+Here is a sample of local vein segmentation with prompt points.
+
+![Sample](./figures/sample.png)
