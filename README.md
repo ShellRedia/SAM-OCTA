@@ -46,3 +46,5 @@ The results and metrics will recorded in the **results** folder (If it doesn't e
 Here is a sample of local vein segmentation with prompt points.
 
 ![Sample](./figures/sample.png)
+
+Related Paper: https://arxiv.org/abs/2309.11758
