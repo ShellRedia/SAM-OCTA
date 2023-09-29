@@ -4,6 +4,10 @@ This project involves fine-tuning SAM using LoRA and performing segmentation tas
 
 This project is built using PyTorch and requires a GPU with 24GB or more of RAM.
 
+First, you should put "sam_vit_h_4b8939.pth" - the pertrained weight file in the checkpoints folder.
+
+Download link: https://dl.fbaipublicfiles.com/segment_anything/sam_vit_h_4b8939.pth
+
 Use **train.py** to start fine-tuning. The warning informations will tell you which packages you should install.
 
 The dataset should be formed as **OCTA-500**, like:
