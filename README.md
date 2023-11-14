@@ -48,3 +48,5 @@ Here is a sample of local vein segmentation with prompt points.
 ![Sample](./figures/sample.png)
 
 Related Paper: https://arxiv.org/abs/2309.11758
+
+The pre-trained weights will be published when this paper is accepted. The code in this repository will be updated, and some test code will be removed to make it more organized and tidy.
