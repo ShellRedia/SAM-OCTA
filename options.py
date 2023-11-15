@@ -3,9 +3,9 @@ import argparse
 parser = argparse.ArgumentParser(description='training argument values')
 
 def add_training_parser(parser):
-    parser.add_argument("-device", type=str, default="6,7", help="device")
+    parser.add_argument("-device", type=str, default="0", help="device")
     parser.add_argument("-epochs", type=int, default=50)
-    parser.add_argument("-batch_size", type=int, default=8)
+    parser.add_argument("-batch_size", type=int, default=1)
     parser.add_argument("-lr", type=float, default=1e-3)
     parser.add_argument("-check_interval", type=int, default=5)
     parser.add_argument("-data_dir", type=str, default="datasets/OCTA-500")

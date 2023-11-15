@@ -41,15 +41,15 @@ metrics = args.metrics
 label_types = args.label_types
 #
 
-seed = 42
-random.seed(seed)
-np.random.seed(seed)
-torch.manual_seed(seed)
-torch.cuda.manual_seed(seed)
-torch.backends.cudnn.deterministic = True
-torch.backends.cudnn.benchmark = False
+# seed = 42
+# random.seed(seed)
+# np.random.seed(seed)
+# torch.manual_seed(seed)
+# torch.cuda.manual_seed(seed)
+# torch.backends.cudnn.deterministic = True
+# torch.backends.cudnn.benchmark = False
 
-# os.environ['CUDA_VISIBLE_DEVICES'] = args.device
+os.environ['CUDA_VISIBLE_DEVICES'] = args.device
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 parameter_dct = vars(args)
@@ -82,19 +82,20 @@ def train(conditions):
             parameter_file.write("\n" * 3)
         training_loop(lora_sam, train_sampler, val_sampler, conditions, sample_dir, optimizer, scheduler, metrics_statistics, fold_i==0)
         metrics_statistics.close()
-        break # for test ... ...
+        # break # for test ... ...
 
 def training_loop(model, train_sampler, val_sampler, conditions, sample_dir, optimizer, scheduler, metrics_statistics, training_save=False):
     record_performance(model, val_sampler, conditions, sample_dir, 0, optimizer, metrics_statistics)
     fov, label_type, num_of_prompt_pos, num_of_prompt_total, local_mode, num_of_samples = conditions
-    # dataset = octa500_2d_dataset(fov=fov, label_type=label_type,
-    #                              num_of_prompt_pos=num_of_prompt_pos, 
-    #                              num_of_prompt_total=num_of_prompt_total,
-    #                              local_mode=local_mode)
-    dataset = octa_rose_dataset(label_type=label_type,
-                                num_of_prompt_pos=num_of_prompt_pos, 
-                                num_of_prompt_total=num_of_prompt_total,
-                                local_mode=local_mode)
+    dataset = octa500_2d_dataset(fov=fov, label_type=label_type,
+                                 num_of_prompt_pos=num_of_prompt_pos, 
+                                 num_of_prompt_total=num_of_prompt_total,
+                                 local_mode=local_mode)
+    # dataset = octa_rose_dataset(label_type=label_type,
+    #                             num_of_prompt_pos=num_of_prompt_pos, 
+    #                             num_of_prompt_total=num_of_prompt_total,
+    #                             local_mode=local_mode)
+    
     train_loader = DataLoader(dataset, batch_size=batch_size, sampler=train_sampler)
 
     for epoch in tqdm(range(1, epochs+1)):
@@ -115,16 +116,17 @@ def record_performance(model, val_sampler, conditions, sample_dir, epoch, optimi
     fov, label_type, num_of_prompt_pos, num_of_prompt_total, local_mode, num_of_samples = conditions
     metrics_statistics.metric_values["learning rate"].append(optimizer.param_groups[0]['lr'])
     for case in range(10):
-        # dataset = octa500_2d_dataset(fov=fov, label_type=label_type,
-        #                              num_of_prompt_pos=num_of_prompt_pos, 
-        #                              num_of_prompt_total=num_of_prompt_total,
-        #                              local_mode=local_mode,
-        #                              random_seed=case+1)
-        dataset = octa_rose_dataset(label_type=label_type,
+        dataset = octa500_2d_dataset(fov=fov, label_type=label_type,
                                      num_of_prompt_pos=num_of_prompt_pos, 
                                      num_of_prompt_total=num_of_prompt_total,
                                      local_mode=local_mode,
                                      random_seed=case+1)
+        # dataset = octa_rose_dataset(label_type=label_type,
+        #                              num_of_prompt_pos=num_of_prompt_pos, 
+        #                              num_of_prompt_total=num_of_prompt_total,
+        #                              local_mode=local_mode,
+        #                              random_seed=case+1)
+
         val_loader = DataLoader(dataset, batch_size=1, sampler=val_sampler)
         for _, (images, original_size, prompt_points, point_labels, labels, sample_ids) in enumerate(val_loader, 0):
             images, labels = images.to(device), labels.to(device)
@@ -154,80 +156,19 @@ def record_performance(model, val_sampler, conditions, sample_dir, epoch, optimi
 def loss_calc(preds, labels, label_type):
     # vessel
     if label_type in ("Artery", "Vein", "LargeVessel"):
-        return 0.7 * DiceLoss()(preds, labels) + 0.3 * clDiceLoss()(preds, labels)
+        return 0.8 * DiceLoss()(preds, labels) + 0.2 * clDiceLoss()(preds, labels)
     if label_type in ("Capillary", "FAZ"):
         return DiceLoss()(preds, labels)
 
-# Global
-def pipeline_octa500_vessel():
-    conditions = [
-        # ["6M", "FAZ", 0, 1, False], 
-        # ["3M", "LargeVessel", 1, 1, True], 
-        # ["6M", "Capillary", 0, 1, False], 
-        # ["3M", "Capillary", 1, 30, False], 
-        # ["6M", "Capillary", 1, 50, False], 
-        # ["3M", "Capillary", 2, 60, False], 
-        # ["6M", "Capillary", 2, 90, False],
-        # ["3M", "Artery", 0, 1, False], 
-        # ["6M", "Artery", 0, 1, False], 
-        # ["3M", "Artery", 1, 20, False], 
-        # ["6M", "Artery", 1, 20, False], 
-        # ["3M", "Artery", 2, 40, False], 
-        # ["6M", "Artery", 2, 40, False],
-        # ["3M", "Vein", 0, 1, False], 
-        # ["6M", "Vein", 0, 1, False], 
-        # ["3M", "Vein", 1, 20, False], 
-        # ["6M", "Vein", 1, 25, False], 
-        # ["3M", "Vein", 2, 40, False], 
-        # ["6M", "Vein", 2, 45, False],
-        # ["6M", "Artery", 0, 1, True], 
-        # ["6M", "Artery", 1, 1, True], 
-        # ["6M", "Artery", 1, 2, True], 
-        # ["6M", "Artery", 2, 3, True], 
-        # ["6M", "Artery", 2, 4, True], 
-        # ["ROSE", "LargeVessel", 0, 1, False], 
-        # ["ROSE", "LargeVessel", 1, 30, False], 
-        # ["ROSE", "LargeVessel", 2, 60, False], 
-        # ["ROSE", "Capillary", 0, 1, False], 
-        # ["ROSE", "Capillary", 1, 20, False], 
-        ["ROSE", "Capillary", 2, 40, False],
-    ]
-    
-    for fov, label_type, num_of_prompt_pos, num_of_prompt_total, local_mode in conditions:
-        # num_of_samples = len(octa500_2d_dataset(fov=fov))
-        num_of_samples = len(octa_rose_dataset())
-        # parameters record:
-        # parameter_dct["fov"] = fov
-        parameter_dct["label_type"] = label_type
-        parameter_dct["num_of_prompt_pos"] = str(num_of_prompt_pos)
-        parameter_dct["num_of_prompt_total"] = str(num_of_prompt_total)
-        parameter_dct["local_mode"] = str(local_mode)
-        #
-        train((fov, label_type, num_of_prompt_pos, num_of_prompt_total, local_mode, num_of_samples))
-
-# Local:
-def pipeline_octa_local():
-    fovs = ["3M", "6M"]
-    label_types = ["Artery", "Veins"] # "FAZ", "Capillary"]
-    num_of_prompts_pos = list(range(3))
-    num_of_prompts_neg = list(range(3))
-    conditions = [fovs, label_types, num_of_prompts_pos, num_of_prompts_neg]
-
-    for fov, label_type, num_of_prompt_pos, num_of_prompt_neg in itertools.product(*conditions):
-        local_mode = True
-        num_of_prompt_total = num_of_prompt_pos + num_of_prompt_neg
-        if num_of_prompt_total:
-            num_of_samples = len(octa500_2d_dataset(fov=fov))
-            # parameters record:
-            parameter_dct["fov"] = fov
-            parameter_dct["label_type"] = label_type
-            parameter_dct["num_of_prompt_pos"] = str(num_of_prompt_pos)
-            parameter_dct["num_of_prompt_total"] = str(num_of_prompt_total)
-            parameter_dct["local_mode"] = str(local_mode)
-            #
-            train((fov, label_type, num_of_prompt_pos, num_of_prompt_total, local_mode, num_of_samples))
-
-# "Artery", "Vein"
 if __name__=="__main__":
-    pipeline_octa500_vessel()
-    # pipeline_octa_local()
+    fov, label_type, num_of_prompt_pos, num_of_prompt_total, local_mode  = "3M", "Artery", 1, 1, True
+
+    num_of_samples = len(octa500_2d_dataset(fov=fov))
+    # parameters record:
+    parameter_dct["fov"] = fov
+    parameter_dct["label_type"] = label_type
+    parameter_dct["num_of_prompt_pos"] = str(num_of_prompt_pos)
+    parameter_dct["num_of_prompt_total"] = str(num_of_prompt_total)
+    parameter_dct["local_mode"] = str(local_mode)
+    #
+    train((fov, label_type, num_of_prompt_pos, num_of_prompt_total, local_mode, num_of_samples))
