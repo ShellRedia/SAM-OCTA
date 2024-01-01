@@ -14,7 +14,7 @@ vit_l: https://dl.fbaipublicfiles.com/segment_anything/sam_vit_l_0b3195.pth
 
 vit_b: https://dl.fbaipublicfiles.com/segment_anything/sam_vit_b_01ec64.pth
 
-经过测试，三种模型所需要的显存分别为：**36,248, 26,154, 13,467** MB。其中vit_h是默认使用的，如果您需要使用其他更小的模型，请下载对应权重，并修改对应配置项。
+经过测试，三种模型所需要的显存分别为：**36,248、 26,154、 13,467** MB。其中vit_h是默认使用的，如果您需要使用其他更小的模型，请下载对应权重，并修改对应配置项。
 
     ...
     parser.add_argument("-model_type", type=str, default="vit_h")

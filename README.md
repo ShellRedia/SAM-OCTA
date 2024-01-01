@@ -13,7 +13,7 @@ vit_l: https://dl.fbaipublicfiles.com/segment_anything/sam_vit_l_0b3195.pth
 
 vit_b: https://dl.fbaipublicfiles.com/segment_anything/sam_vit_b_01ec64.pth
 
-After testing, the required RAM for the three models is as follows: **36,248 MB、26,154 MB、13,467 MB**. The "vit_h" is the default option. If you need to use other smaller models, please download the corresponding weights and modify the configuration in **options.py**.
+After testing, the required RAM for the three models is as follows: **36,248 MB, 26,154 MB, 13,467 MB**. The "vit_h" is the default option. If you need to use other smaller models, please download the corresponding weights and modify the configuration in **options.py**.
 
     ...
     parser.add_argument("-model_type", type=str, default="vit_h")
