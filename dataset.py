@@ -1,155 +1,124 @@
-from convert import points_to_gaussian_heatmap, label_to_point_prompt
+from prompt_points import label_to_point_prompt_local, label_to_point_prompt_global
 from torch.utils.data import Dataset
 import pandas as pd
 import cv2
 import os
+import random
 import numpy as np
 from collections import *
 from segment_anything.utils.transforms import ResizeLongestSide
 
-def get_sam_item(image, label_path, num_of_prompt_pos, num_of_prompt_total, local_mode, random_seed):
-    transform = ResizeLongestSide(1024)
+from display import show_result_sample_figure
+import albumentations as alb
+
+prob = 0.3
+transform_aug = alb.Compose([
+    alb.RandomBrightnessContrast(p=prob),
+    alb.CLAHE(p=prob), 
+    alb.Rotate(limit=30, p=prob),
+    alb.VerticalFlip(p=prob),
+    alb.HorizontalFlip(p=prob),
+    alb.AdvancedBlur(p=prob),
+])
+
+def get_sam_item(image, label, prompt_positive_num, prompt_total_num, is_local, is_transform, model_type="vit_h"):
+    if is_transform:
+        transformed = transform_aug(**{"image": image.transpose((1,2,0)), "mask": label[np.newaxis,:].transpose((1,2,0))})
+        image, label = transformed["image"].transpose((2,0,1)), transformed["mask"].transpose((2,0,1))[0]
+    selected_component, _, prompt_points_pos, prompt_points_neg = \
+        label_to_point_prompt_global(label, prompt_positive_num, prompt_total_num)
+    if is_local:
+        selected_component, _, prompt_points_pos, prompt_points_neg = \
+            label_to_point_prompt_local(label, prompt_positive_num, prompt_total_num-prompt_positive_num)
+
+    sam_transform = ResizeLongestSide(224) if model_type == "vit_b" else ResizeLongestSide(1024)
     original_size = tuple(image.shape[-2:])
-    image = transform.apply_image(image.transpose((1, 2, 0)))
-    image = image.transpose((2, 0, 1))
-    component, prompt_points_pos, prompt_points_neg = label_to_point_prompt(label_path, 
-                                                        positive_num=num_of_prompt_pos, 
-                                                        total_num=num_of_prompt_total, 
-                                                        local_mode=local_mode,
-                                                        random_seed=random_seed)
-    prompt_points, prompt_label = None, None
-    if len(prompt_points_pos) and len(prompt_points_neg):
-        prompt_points = np.vstack((prompt_points_pos, prompt_points_neg))
-    elif len(prompt_points_pos):
-        prompt_points = prompt_points_pos
-    elif len(prompt_points_neg):
-        prompt_points = prompt_points_neg
+    image = sam_transform.apply_image(image.transpose((1, 2, 0))).transpose((2, 0, 1))
+    
+    max_prompt_length = 50
+    prompt_length = len(prompt_points_pos) + len(prompt_points_neg)
+    padding_length = max_prompt_length - prompt_length
 
-    if prompt_points is not None:
-        prompt_label = np.array([1] * len(prompt_points_pos) + [0] * len(prompt_points_neg))
-        prompt_points = transform.apply_coords(prompt_points, original_size)
-
-    return image, original_size, prompt_points, prompt_label, component
+    prompt_type = np.array([1] * len(prompt_points_pos) + [0] * len(prompt_points_neg) + [2] *  padding_length)
+    prompt_points = prompt_points_pos + prompt_points_neg + [[-100, -100]] * padding_length # -100 can be any constant
+    prompt_points = np.array(prompt_points)
+    prompt_points = sam_transform.apply_coords(prompt_points, original_size)
+        
+    return image, original_size, prompt_points, prompt_type, selected_component
 
 class octa500_2d_dataset(Dataset):
     def __init__(self, data_dir="datasets/OCTA-500", 
                  fov="3M", modal="OCTA", 
-                 projection_layers=["OPL_BM", "ILM_OPL", "FULL"],
-                 selected=["all"], label_type="LargeVessel", 
-                 num_of_prompt_pos=5, num_of_prompt_total=5, 
-                 local_mode=False, random_seed=None):
-        self.image_size = 304 if fov == "3M" else 400
-        self.label_excel_path = "{}/OCTA_{}/TextLabels.xlsx".format(data_dir, fov)
+                 layers=["OPL_BM", "ILM_OPL", "FULL"], 
+                 label_type="LargeVessel", 
+                 model_type="vit_h",
+                 prompt_positive_num=-1, 
+                 prompt_total_num=-1, 
+                 is_local=True,
+                 is_training=True):
         
-        self.random_seed = random_seed
-        self.num_of_prompt_pos = num_of_prompt_pos
-        self.num_of_prompt_total = num_of_prompt_total
-        self.local_mode = local_mode
-        # 读取样本信息，通过条件筛选出 ID
-        valid_ids = self.get_valid_ids(selected)
-        self.ids = valid_ids
-        # 获取筛选样本
+        self.prompt_positive_num = prompt_positive_num
+        self.prompt_total_num = prompt_total_num
+        self.is_local = is_local
+        self.is_training = is_training
+        self.model_type = model_type
+
+        label_dir = "{}/OCTA_{}/GT_{}".format(data_dir, fov, label_type)
+        self.sample_ids = [x[:-4] for x in sorted(os.listdir(label_dir))]
         images = []
-        for id in valid_ids:
+        for sample_id in self.sample_ids:
             image_channels = []
-            for layer_name in projection_layers:
-                for modal_type in "OCTA", "OCT":
-                    if modal_type == modal or modal.upper() == "ALL":
-                        image_path = "{}/OCTA_{}/ProjectionMaps/{}({})/{}.bmp".format(data_dir, fov, modal_type, layer_name, id)
-                        image_channels.append(cv2.imread(image_path, cv2.IMREAD_GRAYSCALE))
+            for layer in layers:
+                image_path = "{}/OCTA_{}/ProjectionMaps/{}({})/{}.bmp".format(data_dir, fov, modal, layer, sample_id)
+                image_channels.append(cv2.imread(image_path, cv2.IMREAD_GRAYSCALE))
             images.append(np.array(image_channels))
         self.images = images
-        # 获取标签
-        self.label_paths = ["{}/OCTA_{}/GT_{}/{}.bmp".format(data_dir, fov, label_type, id) for id in valid_ids]
+
+        load_label = lambda sample_id: cv2.imread("{}/{}.bmp".format(label_dir, sample_id), cv2.IMREAD_GRAYSCALE) / 255
+        self.labels = [load_label(x) for x in self.sample_ids]
 
     def __len__(self):
         return len(self.images)
 
     def __getitem__(self, index):
-        image, original_size, prompt_points, prompt_label, component = get_sam_item(self.images[index], 
-                                                                                    self.label_paths[index], 
-                                                                                    self.num_of_prompt_pos, 
-                                                                                    self.num_of_prompt_total, 
-                                                                                    self.local_mode, self.random_seed)
-        
-        return image, original_size, prompt_points, prompt_label, component, self.ids[index]
+        ppn, ptn = self.prompt_positive_num, self.prompt_total_num
+        random_max = 4
+        if ptn == -1: ptn = random.randint(0, random_max)
+        ppn = random.randint(0, ptn) if ppn == -1 else min(ppn, ptn)
 
-    def get_valid_ids(self, selected):
-        label_excel_path = self.label_excel_path
-        ids = pd.read_excel(label_excel_path)["ID"]
-        diseases = pd.read_excel(label_excel_path)["Disease"]
-        return [id for id, disease in zip(ids, diseases) if disease in selected or "all" in selected]
+        image, original_size, prompt_points, prompt_type, selected_component = \
+            get_sam_item(self.images[index], self.labels[index], ppn, ptn, self.is_local, self.is_training, self.model_type)  
+        return image, original_size, prompt_points, prompt_type, selected_component, self.sample_ids[index]
 
-class octa_rose_dataset(Dataset):
-    def __init__(self, data_dir="datasets/OCTA-ROSE", 
-                 label_type="LargeVessel",
-                 num_of_prompt_pos=5, num_of_prompt_total=5, 
-                 local_mode=False, random_seed=None):
+class cell_dataset(Dataset):
+    def __init__(self, data_dir="datasets/CELL", 
+                 prompt_positive_num=-1, 
+                 prompt_total_num=-1, 
+                 is_local=True,
+                 is_training=True):
         
-        self.random_seed = random_seed
-        self.num_of_prompt_pos = num_of_prompt_pos
-        self.num_of_prompt_total = num_of_prompt_total
-        self.local_mode = local_mode
+        self.prompt_positive_num = prompt_positive_num
+        self.prompt_total_num = prompt_total_num
+        self.is_local = is_local
+        self.is_training = is_training
         
-        label_type = "GT_" + label_type
-        images, self.label_paths, self.ids = [], [], []
-        for img_file in os.listdir("/".join([data_dir, label_type])):
-            img_channels = []
-            for layer in "DVC", "IVC", "SVC":
-                img_path = "/".join([data_dir, "ProjectionMaps", layer, img_file])
-                img = cv2.imread(img_path, cv2.IMREAD_GRAYSCALE)
-                img_channels.append(img)
-            self.ids.append(img_file[:-4])
-            self.label_paths.append("/".join([data_dir, label_type, img_file]))
-            images.append(img_channels)
-        self.images = np.array(images)
-
+        self.sample_files = sorted(os.listdir("{}/labels".format(data_dir)))
+        self.sample_ids = [x[:-4] for x in self.sample_files]
+        self.images = [cv2.imread("{}/images/{}.jpg".format(data_dir, x), cv2.IMREAD_COLOR) for x in self.sample_ids]
+        self.images = [x.transpose((2, 0, 1)) for x in self.images]
+        self.label_paths = ["{}/labels/{}.png".format(data_dir, x) for x in self.sample_ids]
+        
     def __len__(self):
         return len(self.images)
 
     def __getitem__(self, index):
-        image, original_size, prompt_points, prompt_label, component = get_sam_item(self.images[index], 
-                                                                                    self.label_paths[index], 
-                                                                                    self.num_of_prompt_pos, 
-                                                                                    self.num_of_prompt_total, 
-                                                                                    self.local_mode, self.random_seed)
-        return image, original_size, prompt_points, prompt_label, component, self.ids[index]
+        ppn, ptn = self.prompt_positive_num, self.prompt_total_num
+        if ptn == -1: ptn = random.randint(0, 4)
+        ppn = random.randint(0, ptn) if ppn == -1 else min(ppn, ptn)
 
-class octa_ss_dataset(Dataset):
-    def __init__(self, data_dir="datasets/OCTA-SS",
-                 num_of_prompt_pos=5, num_of_prompt_total=5, 
-                 local_mode=False, random_seed=None):
-        
-        self.random_seed = random_seed
-        self.num_of_prompt_pos = num_of_prompt_pos
-        self.num_of_prompt_total = num_of_prompt_total
-        self.local_mode = local_mode
-
-        images, self.label_paths, self.ids = [], [], []
-        for img_file in os.listdir("/".join([data_dir, "segmented_images"])):
-            gray_image = cv2.imread("/".join([data_dir, "original_images", img_file]), cv2.IMREAD_GRAYSCALE)
-            image = cv2.cvtColor(gray_image, cv2.COLOR_GRAY2BGR)
-            images.append(np.transpose(image, (2, 0, 1)))
-            self.ids.append(img_file[:-4])
-            self.label_paths.append("/".join([data_dir, "segmented_images", img_file]))
-        self.images = np.array(images)
-
-    def __len__(self):
-        return len(self.images)
-
-    def __getitem__(self, index):
-        image, original_size, prompt_points, prompt_label, component = get_sam_item(self.images[index], 
-                                                                                    self.label_paths[index], 
-                                                                                    self.num_of_prompt_pos, 
-                                                                                    self.num_of_prompt_total, 
-                                                                                    self.local_mode, self.random_seed)
-        return image, original_size, prompt_points, prompt_label, component, self.ids[index]
+        image, original_size, prompt_points, prompt_type, selected_component = \
+            get_sam_item(self.images[index], self.label_paths[index], ppn, ptn, self.is_local, self.is_training)  
+        return image, original_size, prompt_points, prompt_type, selected_component, self.sample_ids[index]
     
-
-# if __name__=="__main__":
-#     dataset = octa500_2d_dataset(random_seed=114)
-#     print(dataset[0][0].shape, np.max(dataset[0][0]))
-#     dataset = octa_rose_dataset(random_seed=114)
-#     print(dataset[0][0].shape, np.max(dataset[0][0]))
-#     dataset = octa_ss_dataset(random_seed=114)
-#     print(dataset[0][0].shape, np.max(dataset[0][0]))
+if __name__=="__main__":
+    pass

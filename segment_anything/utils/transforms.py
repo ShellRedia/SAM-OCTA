@@ -100,3 +100,14 @@ class ResizeLongestSide:
         neww = int(neww + 0.5)
         newh = int(newh + 0.5)
         return (newh, neww)
+
+# if __name__=="__main__":
+#     test_image = np.ones((304, 304, 3), dtype=np.uint8)
+#     original_size = tuple(test_image.shape[:2])
+#     sam_transform = ResizeLongestSide(224)
+#     image = sam_transform.apply_image(test_image)
+#     print(image.shape)
+#     prompt_points = np.array([[-100, -100]])
+#     prompt_points = sam_transform.apply_coords(prompt_points, original_size)
+#     print(prompt_points.shape)
+#     print(prompt_points)

@@ -85,7 +85,7 @@ class LoRA_Sam(nn.Module):
         # Here, we do the surgery
         for t_layer_i, blk in enumerate(sam_model.image_encoder.blocks):
             # If we only want few lora layer instead of all
-            if t_layer_i not in self.lora_layer: continue
+            # if t_layer_i not in self.lora_layer: continue
             w_qkv_linear = blk.attn.qkv
             self.dim = w_qkv_linear.in_features
             w_a_linear_q = nn.Linear(self.dim, r, bias=False)
