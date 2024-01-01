@@ -6,7 +6,7 @@
 这是一个使用 LoRA 对 SAM 进行微调，并在 OCTA 图像上执行分割任务的项目, 使用 **PyTorch** 构建。
 
 
-首先，您应该将一个预训练的权重文件放入 sam_weights 文件夹中。预训练权重的下载链接如下:
+首先，您应该将一个预训练的权重文件放入 **sam_weights** 文件夹中。预训练权重的下载链接如下:
 
 vit_h (default): https://dl.fbaipublicfiles.com/segment_anything/sam_vit_h_4b8939.pth 
 

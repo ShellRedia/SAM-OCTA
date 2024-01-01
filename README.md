@@ -5,7 +5,7 @@
 
 This project involves fine-tuning SAM using LoRA and performing segmentation tasks on OCTA images, built with **PyTorch**.
 
-First, you should put a pertrained weight file in the sam_weights folder. The download link for pre-trained weights is as follows:
+First, you should put a pertrained weight file in the **sam_weights** folder. The download link for pre-trained weights is as follows:
 
 vit_h (default): https://dl.fbaipublicfiles.com/segment_anything/sam_vit_h_4b8939.pth 
 
