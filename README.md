@@ -1,5 +1,6 @@
 # SAM-OCTA
 
+中文版README: [README_zh](./README_zh.md)
 
 ## 1.Quick Start
 
