@@ -46,7 +46,8 @@ def show_prompt_points_image(image, positive_region, negative_region, positive_p
 
     return overlay_img
 
-def view_result_samples(result_dir): # Your result dir
+def view_result_samples(result_dir):
+    
     save_dir = "sample_display/{}".format(result_dir[len("results/"):])
     if not os.path.exists(save_dir): os.makedirs(save_dir)
     file_names = [x[-9:-4] for x in os.listdir(result_dir) if "label" in x]
@@ -57,8 +58,9 @@ def view_result_samples(result_dir): # Your result dir
         prompt_info = np.load("{}/{}_prompt_info_{}.npy".format(result_dir, data_name, file_name))
         image = np.load("{}/{}_sample_{}.npy".format(result_dir, data_name, file_name))
 
-        result = show_result_sample_figure((1-image) * 255, label * 255, pred * 255, prompt_info)
+        result = show_result_sample_figure(image* 255, label * 255, pred * 255, prompt_info)
         cv2.imwrite("{}/{}.png".format(save_dir, file_name), result)
+
 
 if __name__=="__main__":
     result_dir = "results/2024-01-01-10-46-22/3M_LargeVessel_100_True/0/0020"

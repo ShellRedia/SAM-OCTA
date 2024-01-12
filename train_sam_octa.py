@@ -106,7 +106,7 @@ class TrainManager_OCTA:
                     sample_id = str(sample_ids[0])
 
                     image, label, pred = map(lambda x:x[0][0].cpu().detach(), (images, labels, preds))
-                    prompt_points, prompt_type  = prompt_points[0].cpu().detach(), prompt_type[0].cpu().detach()
+                    prompt_points, prompt_type = prompt_points[0].cpu().detach(), prompt_type[0].cpu().detach()
                     prompt_info = np.concatenate((prompt_points, prompt_type[:,np.newaxis]), axis=1).astype(int)
                     metrics_statistics.cal_epoch_metric(
                         args.metrics, "{}-{}".format(args.label_type,loader_type), label.int(), pred.int())
@@ -114,7 +114,7 @@ class TrainManager_OCTA:
                     if not os.path.exists(save_dir): os.makedirs(save_dir)
                     save_sample_func = lambda x, y: np.save("/".join([save_dir,\
                                         "{}_{}_{}.npy".format(args.label_type, x, sample_id)]), y)
-                    save_items = {"sample":image, "label":label, "prompt_info":prompt_info, "pred":pred}
+                    save_items = {"sample":image / 255, "label":label, "prompt_info":prompt_info, "pred":pred}
                     for x, y in save_items.items(): save_sample_func(x, y)
 
         record_dataloader(train_loader, "train", False)
