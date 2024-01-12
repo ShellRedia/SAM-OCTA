@@ -25,11 +25,13 @@ def get_sam_item(image, label, prompt_positive_num, prompt_total_num, is_local, 
     if is_transform:
         transformed = transform_aug(**{"image": image.transpose((1,2,0)), "mask": label[np.newaxis,:].transpose((1,2,0))})
         image, label = transformed["image"].transpose((2,0,1)), transformed["mask"].transpose((2,0,1))[0]
-    selected_component, _, prompt_points_pos, prompt_points_neg = \
-        label_to_point_prompt_global(label, prompt_positive_num, prompt_total_num)
+
     if is_local:
         selected_component, _, prompt_points_pos, prompt_points_neg = \
             label_to_point_prompt_local(label, prompt_positive_num, prompt_total_num-prompt_positive_num)
+    else:
+        selected_component, _, prompt_points_pos, prompt_points_neg = \
+            label_to_point_prompt_global(label, prompt_positive_num, prompt_total_num)
 
     sam_transform = ResizeLongestSide(224) if model_type == "vit_b" else ResizeLongestSide(1024)
     original_size = tuple(image.shape[-2:])
