@@ -77,6 +77,6 @@ class octa500_2d_dataset(Dataset):
         return image, prompt_points, prompt_type, selected_component
     
 # if __name__=="__main__":
-#     dataset = octa500_2d_dataset(is_local=False, prompt_positive_num=1, is_training=True)
-#     for image, prompt_points, prompt_type, selected_component, sample_id in tqdm(dataset):
-#         pass
+#     dataset = octa500_2d_dataset(is_local=True, prompt_positive_num=1, is_training=True)
+#     for image, prompt_points, prompt_type, selected_component, sample_id in dataset:
+#         print(np.max(selected_component))

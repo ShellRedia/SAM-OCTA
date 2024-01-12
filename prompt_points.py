@@ -65,7 +65,7 @@ def label_to_point_prompt_global(label, positive_num=2, negative_num=-1):
         negative_points = [(y, x) for (x, y), val in np.ndenumerate(negative_region) if val]
         negative_points = random.sample(negative_points, max(0, negative_num))
 
-    return np.array([label / 255], dtype=float), positive_points, negative_points
+    return np.array([label], dtype=float), positive_points, negative_points
 
 def label_to_point_prompt_local(label, positive_num=2, negative_num=2):
     labelmaps, _, pixel2connetedId = get_labelmap(label)
