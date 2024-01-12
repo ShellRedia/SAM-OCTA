@@ -46,8 +46,7 @@ def show_prompt_points_image(image, positive_region, negative_region, positive_p
 
     return overlay_img
 
-def view_result_samples(result_dir):
-    result_dir = "results/2024-01-01-10-46-22/3M_LargeVessel_100_True/0/0020" # Your result dir
+def view_result_samples(result_dir): # Your result dir
     save_dir = "sample_display/{}".format(result_dir[len("results/"):])
     if not os.path.exists(save_dir): os.makedirs(save_dir)
     file_names = [x[-9:-4] for x in os.listdir(result_dir) if "label" in x]
@@ -62,19 +61,5 @@ def view_result_samples(result_dir):
         cv2.imwrite("{}/{}.png".format(save_dir, file_name), result)
 
 if __name__=="__main__":
-    image_dir = "datasets/OCTA-500/OCTA_3M/ProjectionMaps/OCTA(OPL_BM)"
-    keypoint_dir = "datasets/OCTA-500/OCTA_3M/Keypoints"
-
-    sample_ids = [x[:-4] for x in sorted(os.listdir(image_dir))]
-
-    for sample_id in sample_ids:
-        image = cv2.imread("{}/{}.bmp".format(image_dir, sample_id), cv2.IMREAD_GRAYSCALE)
-        w, h = image.shape
-        image_p = overlay(to_3ch(image), to_3ch(image))
-        with open("{}/{}.txt".format(keypoint_dir, sample_id), "r") as file:
-            lines = int(file.readline())
-            for _ in range(lines):
-                x, y = [float(t) for t in file.readline().split()]
-                x, y = int(w * x), int(h * y)
-                cv2.circle(image_p, (x, y), 4, (0, 255, 0), -1)
-        cv2.imwrite("view_keypoints/{}.png".format(sample_id), image_p)
+    result_dir = "results/2024-01-01-10-46-22/3M_LargeVessel_100_True/0/0020"
+    view_result_samples(result_dir)
