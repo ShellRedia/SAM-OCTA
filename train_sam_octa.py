@@ -18,6 +18,7 @@ import time
 from display import *
 from metrics import MetricsStatistics
 from collections import *
+from segment_anything.utils.transforms import ResizeLongestSide
 
 parser = argparse.ArgumentParser(description='training arguments')
 add_training_parser(parser)
@@ -34,6 +35,9 @@ for i in range(num_gpus):
     print(f"GPU {i}: {gpu_name}")
 
 time_str = "-".join(["{:0>2}".format(x) for x in time.localtime(time.time())][:-3])
+print(time_str)
+
+to_cuda = lambda x: x.to(torch.float).to(device)
 
 class TrainManager_OCTA:
     def __init__(self, dataset_train, dataset_val):
@@ -55,6 +59,8 @@ class TrainManager_OCTA:
             sam = sam_model_registry["vit_l"](checkpoint="sam_weights/sam_vit_l_0b3195.pth")
         else:
             sam = sam_model_registry["vit_b"](checkpoint="sam_weights/sam_vit_b_01ec64.pth")
+
+        self.sam_transform = ResizeLongestSide(224) if args.model_type == "vit_b" else ResizeLongestSide(1024)
 
         lora_sam = LoRA_Sam(sam, 4).cuda()
         self.model = DataParallel(lora_sam).to(device)
@@ -89,8 +95,9 @@ class TrainManager_OCTA:
         metrics_statistics.metric_values["learning rate"].append(self.optimizer.param_groups[0]['lr'])
 
         def record_dataloader(dataloader, loader_type="val", is_complete=True):
-            for images, original_size, prompt_points, prompt_type, labels, sample_ids in dataloader:
-                images, labels = images.to(device), labels.to(device) # images.shape: torch.Size([1, 1024, 1024, 3])
+            for images, prompt_points, prompt_type, selected_components, sample_ids in dataloader:
+                images, labels, prompt_type = map(to_cuda, (images, selected_components, prompt_type))
+                images, original_size, prompt_points = self.make_prompts(images, prompt_points)
                 preds = self.model(images, original_size, prompt_points, prompt_type)
                 metrics_statistics.metric_values["loss_"+loader_type].append(self.loss_func(preds, labels).cpu().item())
 
@@ -122,8 +129,9 @@ class TrainManager_OCTA:
             metrics_statistics = MetricsStatistics(save_dir="{}/{}".format(self.record_dir, fold_i))
             self.record_performance(train_loader, val_loader, fold_i, 0, metrics_statistics)
             for epoch in tqdm(range(1, args.epochs+1), desc="training"):
-                for images, original_size, prompt_points, prompt_type, labels, sample_ids in train_loader:
-                    images, labels = images.to(device), labels.to(device) # images.shape: torch.Size([1, 1024, 1024, 3])
+                for images, prompt_points, prompt_type, selected_components, sample_ids in train_loader:
+                    images, labels, prompt_type = map(to_cuda, (images, selected_components, prompt_type))
+                    images, original_size, prompt_points = self.make_prompts(images, prompt_points)
                     self.optimizer.zero_grad()
                     preds = self.model(images, original_size, prompt_points, prompt_type)
                     self.loss_func(preds, labels).backward()
@@ -133,11 +141,18 @@ class TrainManager_OCTA:
                     self.record_performance(train_loader, val_loader, fold_i, epoch, metrics_statistics)
             metrics_statistics.close()
         
+    def make_prompts(self, images, prompt_points):
+        original_size = tuple(images.shape[-2:])
+        images = self.sam_transform.apply_image_torch(images)
+        prompt_points = self.sam_transform.apply_coords_torch(prompt_points, original_size)
+
+        return images, original_size, prompt_points
+
 if __name__=="__main__":
-    ptn, ppn = args.prompt_total_num, args.prompt_positive_num
+    ppn, pnn = args.prompt_positive_num, args.prompt_negative_num
     dataset_train = octa500_2d_dataset(
-        is_local=args.is_local, is_training=True, prompt_positive_num=ppn, prompt_total_num=ptn, model_type=args.model_type)
+        is_local=args.is_local, is_training=True, prompt_positive_num=ppn, prompt_negative_num=pnn)
     dataset_val = octa500_2d_dataset(
-        is_local=args.is_local, is_training=False, prompt_positive_num=ppn, prompt_total_num=ptn, model_type=args.model_type)
+        is_local=args.is_local, is_training=False, prompt_positive_num=ppn, prompt_negative_num=pnn)
     train_manager = TrainManager_OCTA(dataset_train, dataset_val)
     train_manager.train()
