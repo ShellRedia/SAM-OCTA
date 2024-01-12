@@ -77,7 +77,7 @@ vit_b: https://dl.fbaipublicfiles.com/segment_anything/sam_vit_b_01ec64.pth
 
 该项目能够支持多个分割任务，并且分为**全局**和**局部**两种模式。事实上，全局模式下的性能与其他分割模型相差无几，局部模式则是SAM-OCTA所独有。在 **options.py** 文件中，可以对其进行配置，以下是各个选项的说明：
 
-* -device：指定可用显卡的id，可以支持多张显卡，但是由于Meta代码实现的原因，batch_size应该和所使用的显卡数量一致。
+* -device：指定可用显卡的id，可以支持多张显卡，但是由于Meta代码实现的原因，batch_size应该和所使用的显卡数量一致。然而又因为dataloader需要把不同样本对齐，所以最好是 **batch_size=1** 地进行训练，以避免提示点的长度对不齐所造成的报错。
 * -epochs: 训练多少轮。
 * -lr: 由于采用了warm-up策略，这里指的是最大学习率。
 * -check_interval: 间隔多少轮训练后保存一次结果（包括权重）。

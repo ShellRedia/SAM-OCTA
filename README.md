@@ -77,7 +77,7 @@ Here is a sample of local retinal vessel (RV) segmentation with prompt points, r
 
 The project can support multiple segmentation tasks and it has two modes: **global** and **local**. In fact, the performance in the global mode is comparable to other segmentation models, while the local mode is unique to SAM-OCTA. In the **options.py** file, you can configure it, and below are explanations for each option:
 
-* -device: Specifies the IDs of available GPUs. It can support multiple GPUs, but due to the SAM code implementation by Meta, the batch_size should be equal to the number of GPUs used.
+* -device: Specifies the IDs of available GPUs. It can support multiple GPUs, but due to the SAM code implementation by Meta, the batch_size should be equal to the number of GPUs used. However, the dataloader need to align the batch size, it is preferable to train with **batch_size=1** to avoid the prompt points mistake of different length.
 * -epochs: Specifies the number of training epochs.
 * -lr: The maximum learning rate, considering the warm-up strategy.
 * -check_interval: Specifies how often to save results (including weights) after a certain number of training epochs.
