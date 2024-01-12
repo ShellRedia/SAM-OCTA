@@ -8,8 +8,10 @@ from itertools import *
 from functools import *
 import os
 from tqdm import tqdm
+from display import show_prompt_points_image
 
 random_seed = 0
+
 if random_seed:  
     random.seed(random_seed)
     np.random.seed(random_seed)
@@ -44,9 +46,15 @@ def get_negative_region(labelmap, neg_range=8):
 def label_to_point_prompt_global(label, positive_num=2, total_num=50):
     labelmaps, conneted_num, _ = get_labelmap(label)
     positive_points, negative_points = [], []
+    
+    connected_points_dct = defaultdict(list)
+    for (x, y), val in np.ndenumerate(labelmaps): connected_points_dct[val].append((y, x))
+
+    # time consuming loop
     for connected_id in range(1, conneted_num+1):
-        connected_points = [(y, x) for (x, y), val in np.ndenumerate(labelmaps) if val == connected_id]
-        if positive_num <= len(connected_points): positive_points += random.sample(connected_points, max(0, positive_num))
+        if positive_num <= len(connected_points_dct[connected_id]): 
+            positive_points += random.sample(connected_points_dct[connected_id], max(0, positive_num))
+
     negative_num = total_num - conneted_num * positive_num
     negative_region = get_negative_region(label)
     negative_points = [(y, x) for (x, y), val in np.ndenumerate(negative_region) if val]
@@ -57,10 +65,17 @@ def label_to_point_prompt_global(label, positive_num=2, total_num=50):
 def label_to_point_prompt_local(label, positive_num=2, negative_num=2):
     labelmaps, _, pixel2connetedId = get_labelmap(label)
     labelmap_points = [(x, y) for (x, y), val in np.ndenumerate(labelmaps) if val]
-    selected_pixel = random.randint(0, len(labelmap_points)-1)
-    selected_id = pixel2connetedId[labelmap_points[selected_pixel]]
+
+    min_area = positive_num + negative_num
+
+    def get_selected_points():
+        selected_pixel = random.randint(0, len(labelmap_points)-1)
+        selected_id = pixel2connetedId[labelmap_points[selected_pixel]]
+        return  [(x, y) for (x, y), val in np.ndenumerate(labelmaps) if val == selected_id]
     
-    selected_points = [(x, y) for (x, y), val in np.ndenumerate(labelmaps) if val == selected_id]
+    selected_points = get_selected_points()
+    while len(selected_points) < min_area: selected_points = get_selected_points()
+    
     selected_labelmap = np.zeros_like(labelmaps, dtype=np.uint8)
     for (x, y) in selected_points: selected_labelmap[(x, y)] = 1
 
@@ -82,12 +97,13 @@ def label_to_point_prompt_local(label, positive_num=2, negative_num=2):
 #     label_path = "datasets/OCTA-500/OCTA_3M/GT_LargeVessel/10301.bmp"
 #     image, label = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE), cv2.imread(label_path, cv2.IMREAD_GRAYSCALE)
 
-#     # for i in tqdm(range(100)):
-#     #     _label, neg_region, pos, neg = label_to_point_prompt_global(label)
+#     for i in tqdm(range(200)):
+#         label_to_point_prompt_global(label, 2, 50)
 
 #     selected_label, neg_region, pos, neg = label_to_point_prompt_global(label)
-#     selected_label, neg_region, pos, neg = label_to_point_prompt_local(label)
-
-#     # print(selected_label.shape)
-#     cv2.imwrite("temp.png", image)
 #     show_prompt_points_image(image, selected_label[0] * 255, neg_region[0] * 255, pos, neg, "prompt.png")
+    # '''
+    # 200 samples
+    # label_to_point_prompt_local: 21s
+    # label_to_point_prompt_global: before -> 4m 47s; now -> 15s
+    # '''
