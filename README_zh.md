@@ -64,9 +64,8 @@ vit_b: https://dl.fbaipublicfiles.com/segment_anything/sam_vit_b_01ec64.pth
 如果您需要对预测结果进行可视化，请使用 **display.py** 文件。由于结果文件夹是按时间生成的，需要对这一行代码进行替换。生成的图像存放在 **sample_display** 文件夹中。
 
     ...
-    if __name__=="__main__":
         test_dir = "results/2024-01-01-08-17-09/3M_LargeVessel_100_True/0/0000" # Your result dir
-        ...
+    ...
 
 这是一个带有提示点的局部视网膜血管（RV）分割的示例，从左到右分别是输入图像、标注以及预测结果。
 

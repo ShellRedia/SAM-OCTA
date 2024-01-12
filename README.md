@@ -63,10 +63,9 @@ The results and metrics will recorded in the **results** folder (If it doesn't e
 
 If you need to visualize the prediction samples of results, please use the **display.py** file. Since the result folders are generated based on time, you may need to replace this line of code. The generated images are in the **sample_display** folder.
 
-    ...
-    if __name__=="__main__":
+    ..
         test_dir = "results/2024-01-01-08-17-09/3M_LargeVessel_100_True/0/0000" # Your result dir
-        ...
+    ...
 
 Here is a sample of local retinal vessel (RV) segmentation with prompt points, respectively the input image, the ground-truth and the prediction from left to right.
 
