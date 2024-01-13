@@ -72,17 +72,21 @@ Here are some segmentation samples with prompt points, respectively the input im
 **Local Model**
 
 *Artery*
+
 ![Sample](./figures/sample_artery.gif)
 
 *FAZ*
+
 ![Sample](./figures/sample_FAZ.gif)
 
 **Global Model**
 
 *RV*
+
 ![Sample](./figures/sample_RV.gif)
 
 *Capillary*
+
 ![Sample](./figures/sample_capillary.gif)
 
 ## 2.Configuration

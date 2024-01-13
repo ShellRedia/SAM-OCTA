@@ -72,17 +72,21 @@ vit_b: https://dl.fbaipublicfiles.com/segment_anything/sam_vit_b_01ec64.pth
 **局部模式**
 
 *动脉*
+
 ![Sample](./figures/sample_artery.gif)
 
 *中心无血管区*
+
 ![Sample](./figures/sample_FAZ.gif)
 
 **全局模式**
 
 *视网膜血管*
+
 ![Sample](./figures/sample_RV.gif)
 
 *毛细血管*
+
 ![Sample](./figures/sample_capillary.gif)
 
 
