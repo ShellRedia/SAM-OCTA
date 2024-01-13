@@ -67,10 +67,23 @@ If you need to visualize the prediction samples of results, please use the **dis
         test_dir = "results/2024-01-01-08-17-09/3M_LargeVessel_100_True/0/0000" # Your result dir
     ...
 
-Here is a sample of local retinal vessel (RV) segmentation with prompt points, respectively the input image, the ground-truth and the prediction from left to right.
+Here are some segmentation samples with prompt points, respectively the input image, the ground-truth and the prediction from left to right.
 
-![Sample](./figures/sample.png)
+**Local Model**
 
+*Artery*
+![Sample](./figures/sample_artery.gif)
+
+*FAZ*
+![Sample](./figures/sample_FAZ.gif)
+
+**Global Model**
+
+*RV*
+![Sample](./figures/sample_RV.gif)
+
+*Capillary*
+![Sample](./figures/sample_capillary.gif)
 
 ## 2.Configuration
 

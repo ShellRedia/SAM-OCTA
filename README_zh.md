@@ -67,9 +67,23 @@ vit_b: https://dl.fbaipublicfiles.com/segment_anything/sam_vit_b_01ec64.pth
         test_dir = "results/2024-01-01-08-17-09/3M_LargeVessel_100_True/0/0000" # Your result dir
     ...
 
-这是一个带有提示点的局部视网膜血管（RV）分割的示例，从左到右分别是输入图像、标注以及预测结果。
+这是一些带有提示点的分割的示例，从左到右分别是输入图像、标注以及预测结果。
 
-![Sample](./figures/sample.png)
+**局部模式**
+
+*动脉*
+![Sample](./figures/sample_artery.gif)
+
+*中心无血管区*
+![Sample](./figures/sample_FAZ.gif)
+
+**全局模式**
+
+*视网膜血管*
+![Sample](./figures/sample_RV.gif)
+
+*毛细血管*
+![Sample](./figures/sample_capillary.gif)
 
 
 ## 2.相关配置
