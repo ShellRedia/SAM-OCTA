@@ -114,4 +114,8 @@ The following are some configurations specific to the OCTA-500 dataset:
 
  If you find the information useful, please cite the relevant paper:  https://arxiv.org/abs/2309.11758
 
-Additionally, note that pre-trained weights will be released after the formal publication of the paper.
+**Pretrained Weights (Baidu Cloud Storage)**: 
+
+Link：https://pan.baidu.com/s/1S43QadZlhT8dL8TPbA0N6g?pwd=sifh 
+
+Password：sifh 

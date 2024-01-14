@@ -115,4 +115,8 @@ vit_b: https://dl.fbaipublicfiles.com/segment_anything/sam_vit_b_01ec64.pth
 
 如果觉得有用请引用相关论文: https://arxiv.org/abs/2309.11758
 
-预训练权重将在论文正式发表后发布。
+**预训练权重(百度网盘)**: 
+
+链接：https://pan.baidu.com/s/1S43QadZlhT8dL8TPbA0N6g?pwd=sifh 
+
+提取码：sifh 
