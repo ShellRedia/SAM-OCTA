@@ -13,9 +13,8 @@ from tqdm import tqdm
 
 
 class octa500_2d_dataset(Dataset):
-    def __init__(self, data_dir="datasets/OCTA-500", 
-                 fov="3M", modal="OCTA", 
-                 layers=["OPL_BM", "ILM_OPL", "FULL"], 
+    def __init__(self, 
+                 fov="3M", 
                  label_type="LargeVessel", 
                  prompt_positive_num=-1, 
                  prompt_negative_num=-1, 
@@ -27,6 +26,9 @@ class octa500_2d_dataset(Dataset):
         self.is_local = is_local
         self.is_training = is_training
 
+        layers = ["OPL_BM", "ILM_OPL", "FULL"]
+        data_dir = "datasets/OCTA-500"
+        modal = "OCTA"
         label_dir = "{}/OCTA_{}/GT_{}".format(data_dir, fov, label_type)
         self.sample_ids = [x[:-4] for x in sorted(os.listdir(label_dir))]
         images = []

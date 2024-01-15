@@ -150,9 +150,9 @@ class TrainManager_OCTA:
 
 if __name__=="__main__":
     ppn, pnn = args.prompt_positive_num, args.prompt_negative_num
-    dataset_train = octa500_2d_dataset(
-        is_local=args.is_local, label_type=args.label_type, is_training=True, prompt_positive_num=ppn, prompt_negative_num=pnn)
-    dataset_val = octa500_2d_dataset(
-        is_local=args.is_local, label_type=args.label_type, is_training=False, prompt_positive_num=ppn, prompt_negative_num=pnn)
+    dataset_params = [args.fov, args.label_type, ppn, pnn, args.is_local, True]
+    dataset_train = octa500_2d_dataset(*dataset_params)
+    dataset_params[-1] = False
+    dataset_val = octa500_2d_dataset(*dataset_params)
     train_manager = TrainManager_OCTA(dataset_train, dataset_val)
     train_manager.train()
