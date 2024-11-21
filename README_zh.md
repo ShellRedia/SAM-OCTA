@@ -120,3 +120,33 @@ vit_b: https://dl.fbaipublicfiles.com/segment_anything/sam_vit_b_01ec64.pth
 链接：https://pan.baidu.com/s/1S43QadZlhT8dL8TPbA0N6g?pwd=sifh 
 
 提取码：sifh 
+
+## 4.实例预测（补充）
+
+这里我添加一份关于血管的预测代码，并结合图文给出相关说明。
+
+1. 首先准备一张你要预测的图片，我在代码中的处理是将三个通道叠加后，再并排复制一份。复制的一份是用来方便手动标记提示点的（纯绿色正点，纯红色负点），总之就像这样。
+
+![Sample](./figures/sample_3ch.png)
+
+2. 然后加载这个权重，由于只是示例，所以我直接使用了vit-l来微调，花费时间短且内存占用少些。并且这个权重结合了全局和局部两种模式。权重下载链接为：
+
+
+https://pan.baidu.com/s/1iCVmPaLOWVk36YbgcQ4AOg?pwd=i54c 提取码: i54c 
+
+
+然后运行 __predict.py__，结果保存在一个自动生成的 __predition__ 的文件夹中。
+
+3. 全局模式下，无需提供提示点，我在代码中自动加了一个[-100, -100]的固定负点，让我们看看分割效果：
+
+![Sample](./figures/pred_rv_global.png)
+
+4. 局部模式下，在血管上给出提示点，例如：
+
+![Sample](./figures/sample_3ch_prompt.png)
+![Sample](./figures/sample_3ch_prompt2.png)
+
+对应效果如图：
+
+![Sample](./figures/pred_rv_local.png)
+![Sample](./figures/pred_rv_local2.png)

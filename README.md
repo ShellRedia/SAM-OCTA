@@ -119,3 +119,33 @@ The following are some configurations specific to the OCTA-500 dataset:
 Link：https://pan.baidu.com/s/1S43QadZlhT8dL8TPbA0N6g?pwd=sifh 
 
 Password：sifh 
+
+## 4.Instance Prediction (Supplement)
+Here, I provide additional code for vessel prediction, along with explanations through text and images.
+
+1. Prepare an Image for Prediction. Start by preparing an image that you want to predict. In the provided code, I process the image by stacking its three channels and then duplicating it side-by-side. The duplicated version is used for manual annotation of prompt points (pure green for positive points, pure red for negative points). It looks something like this:
+
+![Sample](./figures/sample_3ch.png)
+
+
+2. Load the Pretrained Weights. Since this is just an example, I use a fine-tuned ViT-L model, which requires less memory and computation time. The provided weights combine both global and local prediction modes. You can download the weights from the following link:
+
+https://pan.baidu.com/s/1iCVmPaLOWVk36YbgcQ4AOg?pwd=i54c password: i54c 
+
+Then, run the script predict.py, and the results will be saved in an automatically generated folder named prediction.
+
+3. In global mode, no prompt points are needed. I automatically added a fixed negative point at [-100, -100] in the code. Let's take a look at the segmentation results:
+
+![Sample](./figures/pred_rv_global.png)
+
+4. In local mode, prompt points are provided on the vessels, for example:
+
+![Sample](./figures/sample_3ch_prompt.png)
+![Sample](./figures/sample_3ch_prompt2.png)
+
+The results for the provided prompt points are as follows:
+
+![Sample](./figures/pred_rv_local.png)
+![Sample](./figures/pred_rv_local2.png)
+
+
